@@ -1,7 +1,7 @@
-
 You need to have table jobs present in your database. Please run the SQL below
 to create it.
 
+```
 DROP TABLE IF EXISTS `jobs`;
 CREATE TABLE `jobs` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -16,3 +16,4 @@ CREATE TABLE `jobs` (
   `created_at` datetime NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_czech_ci;
+```
