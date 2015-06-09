@@ -1,0 +1,25 @@
+{
+    "name": "kurzor/queue",
+    "description": "Implementation of PHP task queue using db to store tasks and statistics",
+    "type": "library",
+    "require": {
+        "php": ">=5.5.0",
+        "symfony/console": "^2.7"
+    },
+    "require-dev": {
+        "php": ">=5.5.0"
+    },
+    "license": "proprietary",
+    "authors": [
+        {
+            "name": "Marek Gach",
+            "email": "gach@kurzor.net"
+        }
+    ],
+    "minimum-stability": "stable",
+    "autoload": {
+        "psr-0": {
+          "Kurzor":"Kurzor/"
+        }
+    }
+}
