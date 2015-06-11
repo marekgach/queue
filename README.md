@@ -17,3 +17,10 @@ CREATE TABLE `jobs` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_czech_ci;
 ```
+
+## Running tests
+
+```
+php composer.phar install && php composer.phar install
+vendor/bin/phpunit --bootstrap=tests/TestHelper.php
+```

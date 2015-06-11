@@ -74,7 +74,7 @@ class Helper extends \Symfony\Component\Console\Helper\Helper{
         $this->password = $options->password;
 
         // searches for retries
-        if (isset($options->retries)) {
+        if (isSet($options->retries)) {
             $this->retries = (int) $options->retries;
         }
     }

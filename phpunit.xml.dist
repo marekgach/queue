@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<phpunit bootstrap="./tests/TestHelper.php"
+         backupGlobals="false"
+         backupStaticAttributes="false"
+         colors="false"
+         convertErrorsToExceptions="true"
+         convertNoticesToExceptions="true"
+         convertWarningsToExceptions="true"
+         processIsolation="false"
+         stopOnFailure="false"
+         syntaxCheck="true"
+        >
+
+    <filter>
+        <whitelist>
+            <directory suffix=".php">./Kurzor/</directory>
+        </whitelist>
+    </filter>
+</phpunit>
