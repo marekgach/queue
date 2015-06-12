@@ -1,4 +1,9 @@
 <?php
+// add library/ into include_path
+set_include_path(implode(PATH_SEPARATOR, array(
+    realpath(realpath(dirname(__FILE__)) . '/../src/'),
+    get_include_path(),
+)));
 
 /**
  * Implementing PSR-0 standard namespace autoloading - @see http://www.sitepoint.com/autoloading-and-the-psr-0-standard/
@@ -11,8 +16,6 @@
 spl_autoload_register(
     function ($className)
     {
-
-
         $className = ltrim($className, '\\');
         $fileName  = '';
         $namespace = '';

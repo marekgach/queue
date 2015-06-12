@@ -1,28 +1,40 @@
 <?php
 namespace Kurzor\Queue;
 
-use Doklad\Service\Locator;
-
 /**
- * @todo rewrite to use doctrine db (Pdo object <- inject to helper constructor)
  *
  * Class Service to modify Task queue - enqueue and statistics.
  * @package Kurzor\Queue
  */
-class Service {
+class Service
+{
     /**
-     * @var /Queue/Helper Helper class for queue properties manipulation and PDO queries
+     * @var \Kurzor\Queue\Helper Helper class for queue properties manipulation and PDO queries
      */
-    protected static $helper = null;
-
+    protected $helper = null;
 
     /**
-     * Create helper class instance.
+     * @param Helper $helper
      */
-    private static function initHelper() {
-        if(static::$helper == null) {
-            static::$helper = new Helper(Locator::getConfig('database'));
-        }
+    public function __construct(Helper $helper)
+    {
+        $this->helper = $helper;
+    }
+
+    /**
+     * @return Helper
+     */
+    public function getHelper()
+    {
+        return $this->helper;
+    }
+
+    /**
+     * @param Helper $helper
+     */
+    public function setHelper(Helper $helper)
+    {
+        $this->helper = $helper;
     }
 
     /**
@@ -34,29 +46,27 @@ class Service {
      * @param null $run_at datetime when the task should be run. ASAP by default.
      * @return bool|Int false on error, task Id in db queue on success
      */
-    public static function enqueue($handler, $queue = "default", $run_at = null) {
-        static::initHelper();
-
+    public function enqueue($handler, $queue = "default", $run_at = null)
+    {
         // @todo check class is instance of Task class
-        // @todo check allowed queue names - set them into config
 
-        $affected = static::$helper->runUpdate(
+        $affected = $this->helper->runUpdate(
             "INSERT INTO " . static::$helper->jobsTable . " (handler, queue, run_at, created_at) VALUES(?, ?, ?, NOW())",
             array(serialize($handler), (string) $queue, $run_at)
         );
 
         if ($affected < 1) {
-            static::$helper->log("[JOB] failed to enqueue new job", Helper::ERROR);
+            $this->helper->log("[JOB] failed to enqueue new job", Helper::ERROR);
             return false;
         }
 
-        return static::$helper->getConnection()->lastInsertId(); // return the job ID, for manipulation later
+        return $this->helper->getConnection()->lastInsertId(); // return the job ID, for manipulation later
     }
 
 
     /**
-     * Enqueue array of task handlers into task queue. Handler is concrete instance of class Task. May not be the instance
-     * if the same class.
+     * Enqueue array of task handlers into task queue. Handler is concrete instance of class Task. May not be the
+     * instance if the same class.
      *
      * @param array $handlers array of instances of class based on Task abstract class. May not be the same class.
      * @param string $queue queue name. There may be more then 1 queue in system. The name must be valid name for queue
@@ -64,10 +74,9 @@ class Service {
      * @param null $run_at datetime when the task should be run. ASAP by default.
      * @return bool if success
      */
-    public static function bulkEnqueue(array $handlers, $queue = "default", $run_at = null) {
-        static::initHelper();
-
-        $sql = "INSERT INTO " . self::$helper->jobsTable . " (handler, queue, run_at, created_at) VALUES";
+    public function bulkEnqueue(array $handlers, $queue = "default", $run_at = null)
+    {
+        $sql = "INSERT INTO " . $this->helper->jobsTable . " (handler, queue, run_at, created_at) VALUES";
         $sql .= implode(",", array_fill(0, count($handlers), "(?, ?, ?, NOW())"));
 
         $parameters = array();
@@ -76,15 +85,16 @@ class Service {
             $parameters []= (string) $queue;
             $parameters []= $run_at;
         }
-        $affected = static::$helper->runUpdate($sql, $parameters);
+        $affected = $this->helper->runUpdate($sql, $parameters);
 
         if ($affected < 1) {
-            static::$helper->log("[JOB] failed to enqueue new jobs", Helper::ERROR);
+            $this->helper->log("[JOB] failed to enqueue new jobs", Helper::ERROR);
             return false;
         }
 
-        if ($affected != count($handlers))
-            static::$helper->log("[JOB] failed to enqueue some new jobs", Helper::ERROR);
+        if ($affected != count($handlers)) {
+            $this->helper->log("[JOB] failed to enqueue some new jobs", Helper::ERROR);
+        }
 
         return true;
     }
@@ -97,14 +107,14 @@ class Service {
      * @param string $queue queue name to get stats
      * @return array Array containing stats.
      */
-    public static function status($queue = "default") {
-        static::initHelper();
-
-        $rs = self::$helper->runQuery("
-                SELECT COUNT(*) as total, COUNT(failed_at) as failed, COUNT(locked_at) as locked
-                FROM `" . self::$helper->jobsTable . "`
-                WHERE queue = ?
-            ", array($queue));
+    public function getStatus($queue = "default")
+    {
+        $rs = $this->helper->runQuery(
+            "SELECT COUNT(*) as total, COUNT(failed_at) as failed, COUNT(locked_at) as locked " .
+            "FROM `" . $this->helper->jobsTable . "` " .
+            "WHERE queue = ?",
+            array($queue)
+        );
         $rs = $rs[0];
 
         $failed = (int) $rs["failed"];

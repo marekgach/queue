@@ -107,7 +107,9 @@ if (ini_get('short_open_tag') != "") {
 
 // set error reporting and autoload for composer, library etc.
 error_reporting( E_ALL | E_STRICT );
-require __DIR__ . '/../bin/autoload.php';
+require realpath(dirname(__FILE__)) . '/../bin/autoload.php';
+
+require realpath(dirname(__FILE__)) . '/DbTestCase.php';
 
 // set multibyte encoding to utf-8 to be sure. Some php configs have not utf-8 by default
 mb_internal_encoding('UTF-8');

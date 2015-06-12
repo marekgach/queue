@@ -1,5 +1,6 @@
 <?php
 namespace Kurzor\Tools\Console;
+
 use Kurzor\Tools\Console\Config\Db;
 
 /**
@@ -23,10 +24,12 @@ class ConsoleRunnerTest extends \PHPUnit_Framework_TestCase
     protected function setUp()
     {
         $this->cr = new ConsoleRunner();
-        $this->db = new Db();
+        $this->db = $this->getMockBuilder('Kurzor\Tools\Console\Config\Db')
+            ->disableOriginalConstructor()
+            ->getMock();
 
-        $this->db->setUsername('test');
-        $this->db->setPassword('test');
+        $this->db->username = 'username';
+        $this->db->password = 'pass';
     }
 
     public function test_createHelperSet()

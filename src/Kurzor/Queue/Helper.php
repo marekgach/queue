@@ -23,7 +23,7 @@ class Helper extends \Symfony\Component\Console\Helper\Helper{
     /**
      * @var int Min loglevel we want to put into log.
      */
-    private static $log_level = self::INFO;
+    private $log_level = self::INFO;
 
     /**
      * @var \Pdo instance od database
@@ -101,8 +101,8 @@ class Helper extends \Symfony\Component\Console\Helper\Helper{
      *
      * @param $const log level
      */
-    public static function setLogLevel($const) {
-        self::$log_level = $const;
+    public function setLogLevel($const) {
+        $this->log_level = $const;
     }
 
     /**
@@ -110,8 +110,8 @@ class Helper extends \Symfony\Component\Console\Helper\Helper{
      *
      * @param \PDO $db connection object
      */
-    public static function setConnection(\PDO $db) {
-        self::$db = $db;
+    public function setConnection(\PDO $db) {
+        $this->db = $db;
     }
 
 
@@ -142,29 +142,34 @@ class Helper extends \Symfony\Component\Console\Helper\Helper{
      * @throws \PDOException
      * @throws Exception
      */
-    public function runQuery($sql, $params = array()) {
+    public function runQuery($sql, $params = array())
+    {
         for ($attempts = 0; $attempts < $this->retries; $attempts++) {
             try {
                 $stmt = self::getConnection()->prepare($sql);
                 $stmt->execute($params);
 
                 $ret = array();
-                if ($stmt->rowCount()) {
+
+                if ($stmt->fetchColumn() > 0) {
+                    foreach ($stmt->fetchAll(\PDO::FETCH_ASSOC) as $r) {
+                        $ret[] = $r;
+                    }
+                } elseif ($stmt->rowCount()) {
                     // calling fetchAll on a result set with no rows throws a
                     // "general error" exception
-                    foreach ($stmt->fetchAll(\PDO::FETCH_ASSOC) as $r) $ret []= $r;
+                    foreach ($stmt->fetchAll(\PDO::FETCH_ASSOC) as $r) {
+                        $ret[] = $r;
+                    }
                 }
 
                 $stmt->closeCursor();
                 return $ret;
-            }
-            catch (\PDOException $e) {
+            } catch (\PDOException $e) {
                 // Catch "MySQL server has gone away" error.
                 if ($e->errorInfo[1] == 2006) {
                     self::$db = null;
-                }
-                // Throw all other errors as expected.
-                else {
+                } else { // throw some other error
                     throw $e;
                 }
             }

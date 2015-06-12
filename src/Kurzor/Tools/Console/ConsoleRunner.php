@@ -7,7 +7,6 @@ use Kurzor\Tools\Console\Config\Db;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Helper\HelperSet;
 
-
 /**
  * Handles running the Console Tools inside Symfony Console context.
  */
@@ -36,7 +35,7 @@ class ConsoleRunner
      *
      * @return void
      */
-    static public function run(HelperSet $helperSet, $commands = array())
+    public static function run(HelperSet $helperSet, $commands = array())
     {
         $cli = new Application('Kurzor Command Line Interface');
         $cli->setCatchExceptions(true);
@@ -51,14 +50,14 @@ class ConsoleRunner
      *
      * @return void
      */
-    static public function addCommands(Application $cli)
+    public static function addCommands(Application $cli)
     {
         $cli->addCommands(array(
             new \Kurzor\Tools\Console\Command\RunWorker()
         ));
     }
 
-    static public function printCliConfigTemplate()
+    public static function printCliConfigTemplate()
     {
         echo <<<'HELP'
 You are missing a "kurzor-config.php" or "config/kurzor-config.php" file in your

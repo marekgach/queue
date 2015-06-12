@@ -8,7 +8,8 @@
     },
     "require-dev": {
         "php": ">=5.5.0",
-        "phpunit/phpunit": "4.*"
+        "phpunit/phpunit": "4.*",
+        "phpunit/dbunit": "*"
     },
     "license": "proprietary",
     "authors": [
@@ -20,7 +21,7 @@
     "minimum-stability": "stable",
     "autoload": {
         "psr-0": {
-          "Kurzor":"Kurzor/"
+          "Kurzor":"src/"
         }
     }
 }
