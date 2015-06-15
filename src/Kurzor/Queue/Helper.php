@@ -234,7 +234,7 @@ class Helper extends \Symfony\Component\Console\Helper\Helper
      */
     public function log($msg, $severity = self::CRITICAL)
     {
-        if ($severity >= static::$log_level) {
+        if ($severity >= $this->log_level) {
             printf("[%s] %s\n", date('c'), $msg);
         }
     }
