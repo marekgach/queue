@@ -60,7 +60,37 @@ class ServiceTest extends DbTestCase
 
         $this->assertInternalType('array', $status);
 
-        var_dump($status);
+        $this->assertEquals(3, $status['outstanding']);
+        $this->assertEquals(1, $status['locked']);
+        $this->assertEquals(1, $status['failed']);
+        $this->assertEquals(5, $status['total']);
+    }
+
+    public function test_getStatus_mailQueue()
+    {
+        $status = $this->service->getStatus('mail');
+
+        $this->assertInternalType('array', $status);
+
+        $this->assertEquals(2, $status['outstanding']);
+        $this->assertEquals(0, $status['locked']);
+        $this->assertEquals(2, $status['failed']);
+        $this->assertEquals(4, $status['total']);
+    }
+
+    /**
+     * Will return 0 for all statistics. We are not checking if queue exists in any place - is impossible to do so.
+     */
+    public function test_getStatus_notExistingQueue()
+    {
+        $status = $this->service->getStatus('foo');
+
+        $this->assertInternalType('array', $status);
+
+        $this->assertEquals(0, $status['outstanding']);
+        $this->assertEquals(0, $status['locked']);
+        $this->assertEquals(0, $status['failed']);
+        $this->assertEquals(0, $status['total']);
     }
 
     /**

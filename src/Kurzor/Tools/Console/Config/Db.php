@@ -2,7 +2,8 @@
 
 namespace Kurzor\Tools\Console\Config;
 
-class Db {
+class Db
+{
     /**
      * @var
      */

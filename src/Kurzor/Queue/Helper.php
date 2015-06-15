@@ -6,11 +6,12 @@ use Kurzor\Tools\Console\Config\Db;
 /**
  * Class Helper offers methods to log and store / get data about queue from db.
  *
- * @todo add methods allowing to access error handler and log errors manualy
+ * @todo add methods allowing to access error handler and log errors manually
  *
  * @package Kurzor\Queue
  */
-class Helper extends \Symfony\Component\Console\Helper\Helper{
+class Helper extends \Symfony\Component\Console\Helper\Helper
+{
     /**
      * Error levels
      */
@@ -21,7 +22,7 @@ class Helper extends \Symfony\Component\Console\Helper\Helper{
     const    DEBUG = 0;
 
     /**
-     * @var int Min loglevel we want to put into log.
+     * @var int Min log level we want to put into log.
      */
     private $log_level = self::INFO;
 
@@ -65,7 +66,8 @@ class Helper extends \Symfony\Component\Console\Helper\Helper{
      *
      * @param array $options set of db configuration
      */
-    public function __construct($options){
+    public function __construct($options)
+    {
         $this->assertParams($options);
 
         $this->dsn = "mysql:dbname={$options->dbname};host={$options->host};charset={$options->charset}";
@@ -74,7 +76,7 @@ class Helper extends \Symfony\Component\Console\Helper\Helper{
         $this->password = $options->password;
 
         // searches for retries
-        if (isSet($options->retries)) {
+        if (isset($options->retries)) {
             $this->retries = (int) $options->retries;
         }
     }
@@ -84,13 +86,13 @@ class Helper extends \Symfony\Component\Console\Helper\Helper{
     {
         $err = null;
 
-        foreach($this->requiredParams as $param) {
-            if (!isset($options->{$param})){
+        foreach ($this->requiredParams as $param) {
+            if (!isset($options->{$param})) {
                 $err .= "[Queue] Please provide the database {$param} in configure options array.\n";
             }
         }
 
-        if(!empty($err)) {
+        if (!empty($err)) {
             throw new \Kurzor\Queue\Exception($err);
         }
     }
@@ -101,8 +103,17 @@ class Helper extends \Symfony\Component\Console\Helper\Helper{
      *
      * @param $const log level
      */
-    public function setLogLevel($const) {
+    public function setLogLevel($const)
+    {
         $this->log_level = $const;
+    }
+
+    /**
+     * @return int
+     */
+    public function getLogLevel()
+    {
+        return $this->log_level;
     }
 
     /**
@@ -110,7 +121,8 @@ class Helper extends \Symfony\Component\Console\Helper\Helper{
      *
      * @param \PDO $db connection object
      */
-    public function setConnection(\PDO $db) {
+    public function setConnection(\PDO $db)
+    {
         $this->db = $db;
     }
 
@@ -121,7 +133,8 @@ class Helper extends \Symfony\Component\Console\Helper\Helper{
      * @return \PDO instance of db adapter
      * @throws Exception
      */
-    public function getConnection() {
+    public function getConnection()
+    {
         if ($this->db === null) {
             try {
                 $this->db = new \PDO($this->dsn, $this->user, $this->password);
@@ -151,11 +164,10 @@ class Helper extends \Symfony\Component\Console\Helper\Helper{
 
                 $ret = array();
 
-                if ($stmt->fetchColumn() > 0) {
-                    foreach ($stmt->fetchAll(\PDO::FETCH_ASSOC) as $r) {
-                        $ret[] = $r;
-                    }
-                } elseif ($stmt->rowCount()) {
+                // NOTE: need to flush output buffer for INSERT, DELETE or UPDATE. Also to get results for SELECT.
+                // There is not guaranteed $stmt->rowCount() will return correct result for SELECT statement - do not
+                // work in SQLite, however in MySQL does.
+                if (preg_match('/SELECT\s/', $sql) || $stmt->rowCount()) {
                     // calling fetchAll on a result set with no rows throws a
                     // "general error" exception
                     foreach ($stmt->fetchAll(\PDO::FETCH_ASSOC) as $r) {
@@ -165,6 +177,7 @@ class Helper extends \Symfony\Component\Console\Helper\Helper{
 
                 $stmt->closeCursor();
                 return $ret;
+        // @codeCoverageIgnoreStart
             } catch (\PDOException $e) {
                 // Catch "MySQL server has gone away" error.
                 if ($e->errorInfo[1] == 2006) {
@@ -176,6 +189,7 @@ class Helper extends \Symfony\Component\Console\Helper\Helper{
         }
 
         throw new Exception("[Queue] Exhausted retries connecting to database");
+        // @codeCoverageIgnoreEnd
     }
 
 
@@ -187,20 +201,18 @@ class Helper extends \Symfony\Component\Console\Helper\Helper{
      * @throws \PDOException
      * @throws Exception
      */
-    public function runUpdate($sql, $params = array()) {
+    public function runUpdate($sql, $params = array())
+    {
         for ($attempts = 0; $attempts < $this->retries; $attempts++) {
             try {
                 $stmt = self::getConnection()->prepare($sql);
                 $stmt->execute($params);
                 return $stmt->rowCount();
-            }
-            catch (\PDOException $e) {
+            } catch (\PDOException $e) {
                 // Catch "MySQL server has gone away" error.
                 if ($e->errorInfo[1] == 2006) {
                     self::$db = null;
-                }
-                // Throw all other errors as expected.
-                else {
+                } else { // throw some other error
                     throw $e;
                 }
             }
@@ -220,7 +232,8 @@ class Helper extends \Symfony\Component\Console\Helper\Helper{
      * @param $mesg message text to be logged
      * @param int $severity log severity
      */
-    public function log($msg, $severity=self::CRITICAL) {
+    public function log($msg, $severity = self::CRITICAL)
+    {
         if ($severity >= static::$log_level) {
             printf("[%s] %s\n", date('c'), $msg);
         }

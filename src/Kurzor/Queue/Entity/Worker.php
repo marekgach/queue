@@ -9,7 +9,8 @@ use Kurzor\Queue\Helper;
  *
  * @package Kurzor\Queue\Entity
  */
-class Worker {
+class Worker
+{
     /**
      * @var array default config options. Also it is the set of all allowed parameters.
      */
@@ -73,9 +74,10 @@ class Worker {
      * @param $options
      * @param Helper $helper
      */
-    public function __construct($options, Helper $helper, $queue='default') {
-        foreach($this->options_default as $value) {
-            if(isSet($options[$value])) {
+    public function __construct($options, Helper $helper, $queue = 'default')
+    {
+        foreach ($this->options_default as $value) {
+            if (isset($options[$value])) {
                 $this->{$value} = $options[$value];
             }
         }
@@ -100,7 +102,8 @@ class Worker {
      *
      * @param $signo signal number form handler - 2 of them for us
      */
-    public function handleSignal($signo) {
+    public function handleSignal($signo)
+    {
         $signals = array(
             SIGTERM => "SIGTERM",
             SIGINT  => "SIGINT"
@@ -118,8 +121,10 @@ class Worker {
     /**
      * Release all locks aquired for this worker (hostname + process ID).
      */
-    public function releaseLocks() {
-        $this->helper->runUpdate("UPDATE {$this->helper->jobsTable} SET locked_at = NULL, locked_by = NULL WHERE locked_by = ?",
+    public function releaseLocks()
+    {
+        $this->helper->runUpdate(
+            "UPDATE {$this->helper->jobsTable} SET locked_at = NULL, locked_by = NULL WHERE locked_by = ?",
             array($this->name)
         );
     }
@@ -131,13 +136,15 @@ class Worker {
      *
      * @return \Kurzor\Queue\Entity\Job
      */
-    public function getNewJob() {
+    public function getNewJob()
+    {
         // we can grab a locked job if we own the lock
-        $rs = $this->helper->runQuery("SELECT id FROM {$this->helper->jobsTable} WHERE  queue = ? AND (run_at IS NULL OR NOW() >= run_at)
-            AND (locked_at IS NULL OR locked_by = ?) AND failed_at IS NULL AND attempts < ?
-            ORDER BY created_at DESC
-            LIMIT  10
-        ", array($this->queue, $this->name, $this->max_attempts));
+        $rs = $this->helper->runQuery(
+            "SELECT id FROM {$this->helper->jobsTable} WHERE  queue = ? AND (run_at IS NULL OR NOW() >= run_at) " .
+            "AND (locked_at IS NULL OR locked_by = ?) AND failed_at IS NULL AND attempts < ? " .
+            "ORDER BY created_at DESC LIMIT  10",
+            array($this->queue, $this->name, $this->max_attempts)
+        );
 
         // randomly order the 10 to prevent lock contention among workers
         shuffle($rs);
@@ -146,7 +153,9 @@ class Worker {
             $job = new Job($this->name, $r["id"], $this->helper, array(
                 "max_attempts" => $this->max_attempts
             ));
-            if ($job->acquireLock()) return $job;
+            if ($job->acquireLock()) {
+                return $job;
+            }
         }
 
         return false;
@@ -156,7 +165,8 @@ class Worker {
     /**
      * Start the worker in infinite loop or up to $this->number of executed tasks.
      */
-    public function start() {
+    public function start()
+    {
         $this->helper->log("[JOB] Starting worker {$this->name} on queue::{$this->queue}", Helper::INFO);
 
         $count = 0;
@@ -180,13 +190,16 @@ class Worker {
                 $job_count += 1;
                 $job->run();
 
-                // @todo use helper to store stats / also use in task runner (while running single task using bin/task.php)
-                // @todo log into stats - taskname, time, avg time, total run count
+           // @todo use helper to store stats / also use in task runner (while running single task using bin/task.php)
+           // @todo log into stats - taskname, time, avg time, total run count
             }
         } catch (Exception $e) {
             $this->helper->log("[JOB] unhandled exception::\"{$e->getMessage()}\"", Helper::ERROR);
         }
 
-        $this->helper->log("[JOB] worker shutting down after running {$job_count} jobs, over {$count} polling iterations", Helper::INFO);
+        $this->helper->log(
+            "[JOB] worker shutting down after running {$job_count} jobs, over {$count} polling iterations",
+            Helper::INFO
+        );
     }
 }

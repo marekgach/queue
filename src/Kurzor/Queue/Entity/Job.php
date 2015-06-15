@@ -9,7 +9,8 @@ use Kurzor\Queue\Helper;
  *
  * @package Kurzor\Queue\Entity
  */
-class Job {
+class Job
+{
     /**
      * @var String name of the worker executing the job
      */
@@ -40,7 +41,8 @@ class Job {
      * @param Helper $helper
      * @param array $options
      */
-    public function __construct($worker_name, $job_id, Helper $helper, $options = array()) {
+    public function __construct($worker_name, $job_id, Helper $helper, $options = array())
+    {
         $options = array_merge(array(
             "max_attempts" => 5
         ), $options);
@@ -57,7 +59,8 @@ class Job {
      *
      * @return bool finished ok?
      */
-    public function run() {
+    public function run()
+    {
         // pull the handler (serialized class) from the db
         $handler = $this->getHandler();
 
@@ -82,11 +85,14 @@ class Job {
 
             $msg = "caught Exception\\Retry \"{$e->getMessage()}\" on attempt $attempts/{$this->max_attempts}.";
 
-            if($attempts == $this->max_attempts) {
+            if ($attempts == $this->max_attempts) {
                 $msg = "[JOB] job::{$this->job_id} $msg Giving up.";
                 $this->finishWithError($msg, $handler);
             } else {
-                $this->helper->log("[JOB] job::{$this->job_id} $msg Try again in {$e->getDelay()} seconds.", Helper::WARN);
+                $this->helper->log(
+                    "[JOB] job::{$this->job_id} $msg Try again in {$e->getDelay()} seconds.",
+                    Helper::WARN
+                );
                 $this->retryLater($e->getDelay());
             }
             return false;
@@ -103,8 +109,12 @@ class Job {
      *
      * @return bool can be lock aquired?
      */
-    public function acquireLock() {
-        $this->helper->log("[JOB] attempting to acquire lock for job::{$this->job_id} on {$this->worker_name}", Helper::INFO);
+    public function acquireLock()
+    {
+        $this->helper->log(
+            "[JOB] attempting to acquire lock for job::{$this->job_id} on {$this->worker_name}",
+            Helper::INFO
+        );
 
         $lock = $this->helper->runUpdate("
             UPDATE " . $this->helper->jobsTable . "
@@ -125,27 +135,28 @@ class Job {
     /**
      * Invoked in methods finishWithError or retryLater. Will release the lock for this Job in db table.
      */
-    public function releaseLock() {
-        $this->helper->runUpdate("
-            UPDATE " . $this->helper->jobsTable . "
-            SET locked_at = NULL, locked_by = NULL
-            WHERE id = ?",
+    public function releaseLock()
+    {
+        $this->helper->runUpdate(
+            "UPDATE {$this->helper->jobsTable} SET locked_at = NULL, locked_by = NULL WHERE id = ?",
             array($this->job_id)
         );
     }
 
 
     /**
-     * Finish the job execution bz deleting the entry from db.
+     * Finish the job execution by deleting the entry from db.
      *
      */
-    public function finish() {
+    public function finish()
+    {
         // @todo store execution stats here into db
 
         $this->helper->runUpdate(
-            "DELETE FROM " . $this->helper->jobsTable . " WHERE id = ?",
+            "DELETE FROM {$this->helper->jobsTable} WHERE id = ?",
             array($this->job_id)
         );
+
         $this->helper->log("[JOB] completed job::{$this->job_id}", Helper::INFO);
     }
 
@@ -156,20 +167,14 @@ class Job {
      * @param $error error message - custom or exception message thrown from the class
      * @param $handler task class instance
      */
-    public function finishWithError($error, $handler = null) {
-        $this->helper->runUpdate("
-            UPDATE " . $this->helper->jobsTable . "
-            SET attempts = attempts + 1,
-                failed_at = IF(attempts >= ?, NOW(), NULL),
-                error = IF(attempts >= ?, ?, NULL)
-            WHERE id = ?",
-            array(
-                $this->max_attempts,
-                $this->max_attempts,
-                $error, // custom error message or error message from some task Exception
-                $this->job_id
-            )
+    public function finishWithError($error, $handler = null)
+    {
+        $this->helper->runUpdate(
+            "UPDATE {$this->helper->jobsTable} SET attempts = attempts + 1, " .
+            "failed_at = IF(attempts >= ?, NOW(), NULL), error = IF(attempts >= ?, ?, NULL) WHERE id = ?",
+            array($this->max_attempts, $this->max_attempts, $error, $this->job_id)
         );
+
         $this->helper->log($error, Helper::ERROR);
         $this->helper->log("[JOB] failure in job::{$this->job_id}", Helper::ERROR);
         $this->releaseLock();
@@ -187,16 +192,12 @@ class Job {
      *
      * @param $delay delay in seconds
      */
-    public function retryLater($delay) {
-        $this->helper->runUpdate("
-            UPDATE " . $this->helper->jobsTable . "
-            SET run_at = DATE_ADD(NOW(), INTERVAL ? SECOND),
-                attempts = attempts + 1
-            WHERE id = ?",
-            array(
-                $delay,
-                $this->job_id
-            )
+    public function retryLater($delay)
+    {
+        $this->helper->runUpdate(
+            "UPDATE {$this->helper->jobsTable} " .
+            "SET run_at = DATE_ADD(NOW(), INTERVAL ? SECOND) attempts = attempts + 1 WHERE id = ?",
+            array($delay, $this->job_id)
         );
 
         // release the aquired lock
@@ -209,13 +210,17 @@ class Job {
      *
      * @return mixed false on some error
      */
-    public function getHandler() {
+    public function getHandler()
+    {
         $rs = $this->helper->runQuery(
-            "SELECT handler FROM " . $this->helper->jobsTable . " WHERE id = ?",
+            "SELECT handler FROM {$this->helper->jobsTable} WHERE id = ?",
             array($this->job_id)
         );
 
-        foreach ($rs as $r) return unserialize($r["handler"]);
+        foreach ($rs as $r) {
+            return unserialize($r["handler"]);
+        }
+
         return false;
     }
 
@@ -225,12 +230,17 @@ class Job {
      *
      * @return bool|Int false on error, number of attempts otherwise
      */
-    public function getAttempts() {
+    public function getAttempts()
+    {
         $rs = $this->helper->runQuery(
-            "SELECT attempts FROM " . $this->helper->jobsTable . " WHERE id = ?",
+            "SELECT attempts FROM {$this->helper->jobsTable} WHERE id = ?",
             array($this->job_id)
         );
-        foreach ($rs as $r) return $r["attempts"];
+
+        foreach ($rs as $r) {
+            return $r["attempts"];
+        }
+
         return false;
     }
 }

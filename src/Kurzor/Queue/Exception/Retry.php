@@ -8,7 +8,8 @@ use Kurzor\Queue\Exception;
  *
  * @package Kurzor\Queue\Exception
  */
-class Retry extends Exception {
+class Retry extends Exception
+{
     /**
      * @var int default delay of execution
      */
@@ -20,7 +21,8 @@ class Retry extends Exception {
      *
      * @param $delay delay duration
      */
-    public function setDelay($delay) {
+    public function setDelay($delay)
+    {
         $this->delay_seconds = $delay;
     }
 
@@ -30,7 +32,8 @@ class Retry extends Exception {
      *
      * @return int delay
      */
-    public function getDelay() {
+    public function getDelay()
+    {
         return $this->delay_seconds;
     }
 }

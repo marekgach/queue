@@ -51,7 +51,7 @@ class Service
         // @todo check class is instance of Task class
 
         $affected = $this->helper->runUpdate(
-            "INSERT INTO " . static::$helper->jobsTable . " (handler, queue, run_at, created_at) VALUES(?, ?, ?, NOW())",
+            "INSERT INTO " . $this->helper->jobsTable . " (handler, queue, run_at, created_at) VALUES(?, ?, ?, NOW())",
             array(serialize($handler), (string) $queue, $run_at)
         );
 
@@ -81,9 +81,9 @@ class Service
 
         $parameters = array();
         foreach ($handlers as $handler) {
-            $parameters []= serialize(($handler));
-            $parameters []= (string) $queue;
-            $parameters []= $run_at;
+            $parameters[] = serialize(($handler));
+            $parameters[] = (string) $queue;
+            $parameters[] = $run_at;
         }
         $affected = $this->helper->runUpdate($sql, $parameters);
 

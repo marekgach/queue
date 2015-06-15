@@ -6,5 +6,6 @@ namespace Kurzor\Queue;
  *
  * @package Kurzor\Queue
  */
-class Exception extends \Exception { }
-
+class Exception extends \Exception
+{
+}

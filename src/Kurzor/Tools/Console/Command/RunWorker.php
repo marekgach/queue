@@ -24,7 +24,13 @@ class RunWorker extends Command
             ->setDescription('Run worker for given queue name')
             ->setDefinition(
                 new InputDefinition(array(
-                    new InputOption('name', null, InputOption::VALUE_OPTIONAL, 'Queue name (used `default` if not specified)', 'default'),
+                    new InputOption(
+                        'name',
+                        null,
+                        InputOption::VALUE_OPTIONAL,
+                        'Queue name (used `default` if not specified)',
+                        'default'
+                    ),
                 ))
             )
             ->setHelp(<<<EOT
