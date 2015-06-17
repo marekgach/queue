@@ -1,5 +1,4 @@
 <?php
-
 namespace Kurzor\Tools\Console\Config;
 
 class Db
@@ -27,7 +26,7 @@ class Db
     /**
      * @var
      */
-    public $dbname;
+    public $dbName;
 
     /**
      * @return mixed
@@ -96,16 +95,16 @@ class Db
     /**
      * @return mixed
      */
-    public function getDbname()
+    public function getDbName()
     {
-        return $this->dbname;
+        return $this->dbName;
     }
 
     /**
-     * @param mixed $dbname
+     * @param mixed $dbName
      */
-    public function setDbname($dbname)
+    public function setDbName($dbName)
     {
-        $this->dbname = $dbname;
+        $this->dbName = $dbName;
     }
 }

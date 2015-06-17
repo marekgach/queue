@@ -1,6 +1,7 @@
 <?php
 namespace Kurzor\Tools\Console\Command;
 
+use Kurzor\Queue\Exception;
 use Symfony\Component\Console\Input\InputDefinition;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -41,13 +42,24 @@ EOT
     }
 
     /**
+     * @param string $queueName
+     * @return Worker
+     */
+    protected function getWorker($queueName = 'default')
+    {
+        $queueHelper = $this->getHelper('queue');
+
+        return new Worker(null, $queueHelper, $queueName);
+    }
+
+    /**
      * {@inheritdoc}
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $queueName = $input->getOption('name');
 
-        $worker = new Worker(null, $this->getHelper('queue'), $queueName);
+        $worker = $this->getWorker($queueName);
         $worker->start();
 
         return 0;

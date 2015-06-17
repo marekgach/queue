@@ -1,8 +1,6 @@
 <?php
 namespace Kurzor\Tools\Console;
 
-use Kurzor\Tools\Console\Config\Db;
-
 /**
  *
  */
@@ -49,5 +47,58 @@ class ConsoleRunnerTest extends \PHPUnit_Framework_TestCase
         $this->expectOutputRegex('/You are missing .*/');
 
         $this->cr->printCliConfigTemplate();
+    }
+
+    public function test_addCommands()
+    {
+        $cli = $this->getMockBuilder('Symfony\Component\Console\Application')
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $cli->expects($this->once())
+            ->method('addCommands');
+
+        $this->cr->addCommands($cli);
+    }
+
+    public function test_run()
+    {
+        // mock Application and mock ALL methods
+        $app = $this->getMockBuilder('Symfony\Component\Console\Application')
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        // expect to get invoked to set application helper set
+        $app->expects($this->once())
+            ->method('setHelperSet');
+
+        // expect to get invoked to set custom commands
+        $app->expects($this->once())
+            ->method('addCommands');
+
+        // create ConsoleRunner and mock getApplication method
+        $cr = $this->getMockBuilder('Kurzor\Tools\Console\ConsoleRunner')
+            ->disableOriginalConstructor()
+            ->setMethods(array('getApplication', 'addCommands'))
+            ->getMock();
+
+        $cr->expects($this->once())
+            ->method('getApplication')
+            ->will($this->returnValue($app));
+
+        $cr->expects($this->once())
+            ->method('addCommands');
+
+        $hs = $this->cr->createHelperSet($this->db);
+
+        $cr->run($hs);
+    }
+
+    public function test_getApplication()
+    {
+        $app = $this->cr->getApplication();
+
+        // check return type
+        $this->assertInstanceOf('Symfony\Component\Console\Application', $app);
     }
 }

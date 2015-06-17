@@ -13,4 +13,6 @@ $config->setUsername('queuetest');
 $config->setPassword('queuetest');
 $config->setDbname('queuetest');
 
-return ConsoleRunner::createHelperSet($config);
+$cr = new ConsoleRunner;
+
+return $cr->createHelperSet($config);

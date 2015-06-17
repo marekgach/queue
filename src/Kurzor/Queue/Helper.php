@@ -70,7 +70,7 @@ class Helper extends \Symfony\Component\Console\Helper\Helper
     {
         $this->assertParams($options);
 
-        $this->dsn = "mysql:dbname={$options->dbname};host={$options->host};charset={$options->charset}";
+        $this->dsn = "mysql:dbname={$options->dbName};host={$options->host};charset={$options->charset}";
 
         $this->user = $options->username;
         $this->password = $options->password;
@@ -208,6 +208,7 @@ class Helper extends \Symfony\Component\Console\Helper\Helper
                 $stmt = self::getConnection()->prepare($sql);
                 $stmt->execute($params);
                 return $stmt->rowCount();
+        // @codeCoverageIgnoreStart
             } catch (\PDOException $e) {
                 // Catch "MySQL server has gone away" error.
                 if ($e->errorInfo[1] == 2006) {
@@ -219,6 +220,7 @@ class Helper extends \Symfony\Component\Console\Helper\Helper
         }
 
         throw new Exception("[Queue] Exhausted retries connecting to database");
+        // @codeCoverageIgnoreEnd
     }
 
 

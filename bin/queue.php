@@ -15,12 +15,14 @@ foreach ($directories as $directory) {
     }
 }
 
-if ( ! file_exists($configFile)) {
-    \Kurzor\Tools\Console\ConsoleRunner::printCliConfigTemplate();
+$cr = new \Kurzor\Tools\Console\ConsoleRunner;
+
+if (!file_exists($configFile)) {
+    $cr->printCliConfigTemplate();
     exit(1);
 }
 
-if ( ! is_readable($configFile)) {
+if (!is_readable($configFile)) {
     echo 'Configuration file [' . $configFile . '] does not have read permission.' . "\n";
     exit(1);
 }
@@ -29,7 +31,7 @@ $commands = array();
 
 $helperSet = require $configFile;
 
-if ( ! ($helperSet instanceof \Symfony\Component\Console\Helper\HelperSet)) {
+if (!($helperSet instanceof \Symfony\Component\Console\Helper\HelperSet)) {
     foreach ($GLOBALS as $helperSetCandidate) {
         if ($helperSetCandidate instanceof \Symfony\Component\Console\Helper\HelperSet) {
             $helperSet = $helperSetCandidate;
@@ -38,4 +40,4 @@ if ( ! ($helperSet instanceof \Symfony\Component\Console\Helper\HelperSet)) {
     }
 }
 
-\Kurzor\Tools\Console\ConsoleRunner::run($helperSet, $commands);
+$cr->run($helperSet, $commands);

@@ -18,7 +18,7 @@ class ConsoleRunner
      * @param $dbConfig
      * @return HelperSet
      */
-    public static function createHelperSet(Db $dbConfig)
+    public function createHelperSet(Db $dbConfig)
     {
         $helpers = array(
             'queue' => new Helper($dbConfig)
@@ -35,14 +35,19 @@ class ConsoleRunner
      *
      * @return void
      */
-    public static function run(HelperSet $helperSet, $commands = array())
+    public function run(HelperSet $helperSet, $commands = array())
     {
-        $cli = new Application('Kurzor Command Line Interface');
+        $cli = $this->getApplication();
         $cli->setCatchExceptions(true);
         $cli->setHelperSet($helperSet);
-        self::addCommands($cli);
+        $this->addCommands($cli);
         $cli->addCommands($commands);
         $cli->run();
+    }
+
+    public function getApplication()
+    {
+        return new Application('Kurzor Command Line Interface');
     }
 
     /**
@@ -50,14 +55,14 @@ class ConsoleRunner
      *
      * @return void
      */
-    public static function addCommands(Application $cli)
+    public function addCommands(Application $cli)
     {
         $cli->addCommands(array(
             new \Kurzor\Tools\Console\Command\RunWorker()
         ));
     }
 
-    public static function printCliConfigTemplate()
+    public function printCliConfigTemplate()
     {
         echo <<<'HELP'
 You are missing a "kurzor-config.php" or "config/kurzor-config.php" file in your
@@ -76,8 +81,9 @@ $config->setUsername('root');
 $config->setPassword('xxx');
 $config->setDbname('databaseNameHere');
 
-return ConsoleRunner::createHelperSet($config);
+$cr = new ConsoleRunner;
 
+return $cr->createHelperSet($config);
 HELP;
 
     }
