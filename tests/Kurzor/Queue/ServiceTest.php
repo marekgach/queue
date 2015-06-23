@@ -54,6 +54,202 @@ class ServiceTest extends DbTestCase
         $this->assertSame($this->helper, $this->service->getHelper());
     }
 
+    public function test_enqueue()
+    {
+        $this->service = new Service($this->helper);
+
+        $new_id = $this->service->enqueue(new \stdClass(), 'mail');
+
+        $this->assertEquals(10, $new_id);
+
+        // check data in db
+        $stmt = $this->getConnection()->getConnection()->prepare("SELECT * FROM {$this->helper->jobsTable} WHERE id=?");
+        $stmt->execute(array($new_id));
+
+        $dbData = $stmt->fetch();
+
+        $this->assertNotNull($dbData);
+
+        $this->assertEquals($dbData['id'], $new_id);
+        $this->assertEquals($dbData['handler'], 'O:8:"stdClass":0:{}');
+        $this->assertEquals($dbData['queue'], 'mail');
+        $this->assertEquals($dbData['attempts'], 0);
+        $this->assertNull($dbData['run_at']); // need to be NULL
+        $this->assertNull($dbData['locked_at']);
+        $this->assertNull($dbData['locked_by']);
+        $this->assertNull($dbData['failed_at']);
+        $this->assertNull($dbData['error']);
+        $this->assertNotNull($dbData['created_at']);
+    }
+
+    public function test_enqueue_delayed()
+    {
+        $this->service = new Service($this->helper);
+
+        $run_at = new \DateTime();
+        $run_at = $run_at->modify('+1 day');
+
+        $new_id = $this->service->enqueue(new \stdClass(), 'mail', $run_at);
+
+        $this->assertEquals(10, $new_id);
+
+        // check data in db
+        $stmt = $this->getConnection()->getConnection()->prepare("SELECT * FROM {$this->helper->jobsTable} WHERE id=?");
+        $stmt->execute(array($new_id));
+
+        $dbData = $stmt->fetch();
+
+        $this->assertNotNull($dbData);
+
+        $this->assertEquals($dbData['id'], $new_id);
+        $this->assertEquals($dbData['handler'], 'O:8:"stdClass":0:{}');
+        $this->assertEquals($dbData['queue'], 'mail');
+        $this->assertEquals($dbData['attempts'], 0);
+        $this->assertNotNull($dbData['run_at']);  // must be NOT NULL
+        $this->assertNull($dbData['locked_at']);
+        $this->assertNull($dbData['locked_by']);
+        $this->assertNull($dbData['failed_at']);
+        $this->assertNull($dbData['error']);
+        $this->assertNotNull($dbData['created_at']);
+    }
+
+    /**
+     * Try to enqueue job in the past will cause exception.
+     * @expectedException \Kurzor\Queue\Exception
+     */
+    public function test_enqueue_delayedBadDate()
+    {
+        $this->service = new Service($this->helper);
+
+        $run_at = new \DateTime();
+        $run_at = $run_at->modify('-1 day');
+
+        $this->service->enqueue(new \stdClass(), 'mail', $run_at);
+    }
+
+    public function test_bulkEnqueue()
+    {
+        $this->service = new Service($this->helper);
+
+        // enqueue 2 jobs
+        $ret = $this->service->bulkEnqueue(array(new \stdClass(),  (object) array('foo' => 'bar')), 'mail');
+
+        $this->assertTrue($ret);
+
+        $new_id = 10;
+        $new2_id = 11;
+
+        // check data in db
+        // first job check
+        $stmt = $this->getConnection()->getConnection()->prepare("SELECT * FROM {$this->helper->jobsTable} WHERE id=?");
+        $stmt->execute(array($new_id));
+
+        $dbData = $stmt->fetch();
+
+        $this->assertNotNull($dbData);
+
+        $this->assertEquals($dbData['id'], $new_id);
+        $this->assertEquals($dbData['handler'], 'O:8:"stdClass":0:{}');
+        $this->assertEquals($dbData['queue'], 'mail');
+        $this->assertEquals($dbData['attempts'], 0);
+        $this->assertNull($dbData['run_at']); // need to be NULL
+        $this->assertNull($dbData['locked_at']);
+        $this->assertNull($dbData['locked_by']);
+        $this->assertNull($dbData['failed_at']);
+        $this->assertNull($dbData['error']);
+        $this->assertNotNull($dbData['created_at']);
+
+        // second job check
+        $stmt = $this->getConnection()->getConnection()->prepare("SELECT * FROM {$this->helper->jobsTable} WHERE id=?");
+        $stmt->execute(array($new2_id));
+
+        $dbData = $stmt->fetch();
+
+        $this->assertNotNull($dbData);
+
+        $this->assertEquals($dbData['id'], $new2_id);
+        $this->assertEquals($dbData['handler'], 'O:8:"stdClass":1:{s:3:"foo";s:3:"bar";}');
+        $this->assertEquals($dbData['queue'], 'mail');
+        $this->assertEquals($dbData['attempts'], 0);
+        $this->assertNull($dbData['run_at']); // need to be NULL
+        $this->assertNull($dbData['locked_at']);
+        $this->assertNull($dbData['locked_by']);
+        $this->assertNull($dbData['failed_at']);
+        $this->assertNull($dbData['error']);
+        $this->assertNotNull($dbData['created_at']);
+    }
+
+    public function test_bulkEnqueue_delayed()
+    {
+        $this->service = new Service($this->helper);
+
+        $run_at = new \DateTime();
+        $run_at = $run_at->modify('+1 day');
+
+        $this->service = new Service($this->helper);
+
+        // enqueue 2 jobs
+        $ret = $this->service->bulkEnqueue(array(new \stdClass(),  (object) array('foo' => 'bar')), 'mail', $run_at);
+
+        $this->assertTrue($ret);
+
+        $new_id = 10;
+        $new2_id = 11;
+
+        // check data in db
+        // first job check
+        $stmt = $this->getConnection()->getConnection()->prepare("SELECT * FROM {$this->helper->jobsTable} WHERE id=?");
+        $stmt->execute(array($new_id));
+
+        $dbData = $stmt->fetch();
+
+        $this->assertNotNull($dbData);
+
+        $this->assertEquals($dbData['id'], $new_id);
+        $this->assertEquals($dbData['handler'], 'O:8:"stdClass":0:{}');
+        $this->assertEquals($dbData['queue'], 'mail');
+        $this->assertEquals($dbData['attempts'], 0);
+        $this->assertEquals($dbData['run_at'], $run_at->format('Y-m-d H:i:s'));
+        $this->assertNull($dbData['locked_at']);
+        $this->assertNull($dbData['locked_by']);
+        $this->assertNull($dbData['failed_at']);
+        $this->assertNull($dbData['error']);
+        $this->assertNotNull($dbData['created_at']);
+
+        // second job check
+        $stmt = $this->getConnection()->getConnection()->prepare("SELECT * FROM {$this->helper->jobsTable} WHERE id=?");
+        $stmt->execute(array($new2_id));
+
+        $dbData = $stmt->fetch();
+
+        $this->assertNotNull($dbData);
+
+        $this->assertEquals($dbData['id'], $new2_id);
+        $this->assertEquals($dbData['handler'], 'O:8:"stdClass":1:{s:3:"foo";s:3:"bar";}');
+        $this->assertEquals($dbData['queue'], 'mail');
+        $this->assertEquals($dbData['attempts'], 0);
+        $this->assertEquals($dbData['run_at'], $run_at->format('Y-m-d H:i:s'));
+        $this->assertNull($dbData['locked_at']);
+        $this->assertNull($dbData['locked_by']);
+        $this->assertNull($dbData['failed_at']);
+        $this->assertNull($dbData['error']);
+        $this->assertNotNull($dbData['created_at']);
+    }
+
+    /**
+     * Try to enqueue job in the past will cause exception.
+     * @expectedException \Kurzor\Queue\Exception
+     */
+    public function test_bulkEnqueue_delayedBadDate()
+    {
+        $this->service = new Service($this->helper);
+
+        $run_at = new \DateTime();
+        $run_at = $run_at->modify('-1 day');
+
+        $this->service->bulkEnqueue(array(new \stdClass()), 'mail', $run_at);
+    }
+
     public function test_getStatus()
     {
         $status = $this->service->getStatus();
