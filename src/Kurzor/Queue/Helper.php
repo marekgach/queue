@@ -15,11 +15,7 @@ class Helper extends \Symfony\Component\Console\Helper\Helper
     /**
      * Error levels
      */
-    const CRITICAL = 4;
-    const    ERROR = 3;
-    const     WARN = 2;
-    const     INFO = 1;
-    const    DEBUG = 0;
+    const CRITICAL = 4, ERROR = 3, WARN = 2, INFO = 1, DEBUG = 0;
 
     /**
      * @var int Min log level we want to put into log.
@@ -59,7 +55,7 @@ class Helper extends \Symfony\Component\Console\Helper\Helper
     /**
      * @var array required parameters
      */
-    protected $requiredParams = array('username', 'password', 'host', 'charset');
+    protected $requiredParams = array('dbName', 'host', 'charset');
 
     /**
      * Set db config into class properties and other stuff.
@@ -68,12 +64,15 @@ class Helper extends \Symfony\Component\Console\Helper\Helper
      */
     public function __construct($options)
     {
-        $this->assertParams($options);
+        if (!empty($options->dsn)) {
+            $this->dsn = $options->dsn;
+        } else {
+            $this->assertParams($options);
+            $this->dsn = "mysql:dbname={$options->dbName};host={$options->host};charset={$options->charset}";
+        }
 
-        $this->dsn = "mysql:dbname={$options->dbName};host={$options->host};charset={$options->charset}";
-
-        $this->user = $options->username;
-        $this->password = $options->password;
+        $this->user = isset($options->username) ? $options->username : null;
+        $this->password = isset($options->password) ? $options->password : null;
 
         // searches for retries
         if (isset($options->retries)) {
@@ -247,5 +246,37 @@ class Helper extends \Symfony\Component\Console\Helper\Helper
     public function getName()
     {
         return 'queue';
+    }
+
+    /**
+     * @return string
+     */
+    public function getDsn()
+    {
+        return $this->dsn;
+    }
+
+    /**
+     * @return string
+     */
+    public function getUser()
+    {
+        return $this->user;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPassword()
+    {
+        return $this->password;
+    }
+
+    /**
+     * @return int
+     */
+    public function getRetries()
+    {
+        return $this->retries;
     }
 }

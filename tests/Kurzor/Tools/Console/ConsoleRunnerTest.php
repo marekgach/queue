@@ -26,6 +26,7 @@ class ConsoleRunnerTest extends \PHPUnit_Framework_TestCase
             ->disableOriginalConstructor()
             ->getMock();
 
+        $this->db->dbName = 'xxx';
         $this->db->username = 'username';
         $this->db->password = 'pass';
     }
