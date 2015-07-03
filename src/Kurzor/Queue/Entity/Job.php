@@ -11,6 +11,8 @@ use Kurzor\Queue\Helper;
  */
 class Job
 {
+    const MAX_ATTEMPTS = 5;
+
     /**
      * @var String name of the worker executing the job
      */
@@ -43,14 +45,10 @@ class Job
      */
     public function __construct($worker_name, $job_id, Helper $helper, $options = array())
     {
-        $options = array_merge(array(
-            "max_attempts" => 5
-        ), $options);
-
         $this->helper = $helper;
         $this->worker_name = $worker_name;
         $this->job_id = $job_id;
-        $this->max_attempts = $options["max_attempts"];
+        $this->max_attempts = isset($options["max_attempts"]) ? $options["max_attempts"] : self::MAX_ATTEMPTS;
     }
 
 
@@ -116,11 +114,11 @@ class Job
             Helper::INFO
         );
 
-        $lock = $this->helper->runUpdate("
-            UPDATE " . $this->helper->jobsTable . "
-            SET    locked_at = NOW(), locked_by = ?
-            WHERE  id = ? AND (locked_at IS NULL OR locked_by = ?) AND failed_at IS NULL
-        ", array($this->worker_name, $this->job_id, $this->worker_name));
+        $lock = $this->helper->runUpdate(
+            "UPDATE {$this->helper->jobsTable} SET locked_at = NOW(), locked_by = ? " .
+            "WHERE id = ? AND (locked_at IS NULL OR locked_by = ?) AND failed_at IS NULL",
+            array($this->worker_name, $this->job_id, $this->worker_name)
+        );
 
         // some error met
         if (!$lock) {
@@ -217,16 +215,12 @@ class Job
             array($this->job_id)
         );
 
-        foreach ($rs as $r) {
-            return unserialize($r["handler"]);
-        }
-
-        return false;
+        return isset($rs[0]["handler"]) ? unserialize($rs[0]["handler"]) : false;
     }
 
 
     /**
-     * Get the number of attempts to execute the task - task may finish with errors previously.
+     * Get the number of attempts to execute the task - task may finish with Exception asking to reschedule
      *
      * @return bool|Int false on error, number of attempts otherwise
      */
@@ -237,10 +231,6 @@ class Job
             array($this->job_id)
         );
 
-        foreach ($rs as $r) {
-            return $r["attempts"];
-        }
-
-        return false;
+        return isset($rs[0]["attempts"]) ? $rs[0]["attempts"] : false;
     }
 }

@@ -147,7 +147,7 @@ class Helper extends \Symfony\Component\Console\Helper\Helper
 
 
     /**
-     * @param $sql sql string with prepare statement placeholders
+     * @param $sql string SQL string with prepare statement placeholders
      * @param array $params prepare statement params
      * @return array data get from db
      * @throws \Exception
@@ -193,7 +193,7 @@ class Helper extends \Symfony\Component\Console\Helper\Helper
 
 
     /**
-     * @param $sql sql string to execute update with prepare statement placeholders
+     * @param $sql string SQL statement string to execute update with prepare statement placeholders
      * @param array $params prepare statement params
      * @return int rows affected number
      * @throws \Exception

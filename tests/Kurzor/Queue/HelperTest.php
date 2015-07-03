@@ -164,4 +164,36 @@ class HelperTest extends DbTestCase
 
         return new Helper($options);
     }
+
+    public function test_getAndSetLevel()
+    {
+        $loglevel = Helper::DEBUG;
+
+        $helper = $this->getHelperInstance();
+        $helper->setLogLevel($loglevel);
+
+        $this->assertEquals($loglevel, $helper->getLogLevel());
+    }
+
+    public function test_getConnection()
+    {
+        $helper = $this->getHelperInstance();
+
+        $pdo = $helper->getConnection();
+
+        $this->assertInstanceOf('\Pdo', $pdo);
+    }
+
+    /**
+     * @expectedException \Kurzor\Queue\Exception
+     * @expectedExceptionMessage [Queue] Couldn't connect to the database. PDO said [SQLSTATE[HY000] [2005] Unknown MySQL server host 'bar' (2)]
+     */
+    public function test_getConnection_BadCredentials()
+    {
+        $helper = new Helper((object) array('dsn' =>"mysql:dbname=foo;host=bar"));
+
+        $pdo = $helper->getConnection();
+
+        $this->assertInstanceOf('\Pdo', $pdo);
+    }
 }
