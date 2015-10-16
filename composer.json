@@ -3,25 +3,24 @@
     "description": "Implementation of PHP task queue using db to store tasks and statistics",
     "type": "library",
     "require": {
-        "php": ">=5.5.0",
+        "php": ">=5.3.2",
         "symfony/console": "^2.7"
     },
     "require-dev": {
-        "php": ">=5.5.0",
-        "phpunit/phpunit": "4.*",
+        "php": ">=5.3.2",
+        "phpunit/phpunit": "4.7.*",
         "phpunit/dbunit": "*"
     },
     "license": "proprietary",
     "authors": [
         {
             "name": "Marek Gach",
-            "email": "gach@kurzor.net"
+            "email": "gach@kurzor.net",
+            "role": "lead"
         }
     ],
     "minimum-stability": "stable",
     "autoload": {
-        "psr-0": {
-          "Kurzor":"src/"
-        }
+        "psr-0": {"Kurzor":"src/"}
     }
 }
