@@ -7,8 +7,7 @@
         "symfony/console": "^2.7"
     },
     "require-dev": {
-        "phpunit/phpunit": "4.6.*",
-        "phpunit/dbunit": "*"
+        "phpunit/phpunit": "4.7.*"
     },
     "license": "GPL",
     "authors": [
