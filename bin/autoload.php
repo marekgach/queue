@@ -14,8 +14,7 @@ set_include_path(implode(PATH_SEPARATOR, array(
  * this autoloading is not a part of PHP 5.4 and even 5.5 - some *** in PHP groups don't want it included. :-(
  */
 spl_autoload_register(
-    function ($className)
-    {
+    function ($className) {
         $className = ltrim($className, '\\');
         $fileName  = '';
         $namespace = '';
@@ -29,3 +28,6 @@ spl_autoload_register(
         require $fileName;
     }
 );
+
+// make composer autoload magic
+require __DIR__ . '/../vendor/autoload.php';
