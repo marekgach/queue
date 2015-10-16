@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "a0ccde1ad6c5db9f402ca74150f07c62",
+    "hash": "ab0dd46234a0582f668de30c6b8a993b",
     "packages": [
         {
             "name": "symfony/console",
@@ -654,6 +654,109 @@
                 "xunit"
             ],
             "time": "2015-10-02 06:51:40"
+        },
+        {
+            "name": "phpunit/phpunit-selenium",
+            "version": "1.4.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/giorgiosironi/phpunit-selenium.git",
+                "reference": "c84dd7ca214563868ce216123b7ae9c792beb262"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/giorgiosironi/phpunit-selenium/zipball/c84dd7ca214563868ce216123b7ae9c792beb262",
+                "reference": "c84dd7ca214563868ce216123b7ae9c792beb262",
+                "shasum": ""
+            },
+            "require": {
+                "ext-curl": "*",
+                "ext-dom": "*",
+                "php": ">=5.3.3",
+                "phpunit/phpunit": "~3.7|~4.0",
+                "sebastian/comparator": "~1.0"
+            },
+            "type": "library",
+            "autoload": {
+                "classmap": [
+                    "PHPUnit/"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "include-path": [
+                ""
+            ],
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "authors": [
+                {
+                    "name": "Sebastian Bergmann",
+                    "email": "sb@sebastian-bergmann.de",
+                    "role": "lead"
+                },
+                {
+                    "name": "Giorgio Sironi",
+                    "email": "info@giorgiosironi.com",
+                    "role": "developer"
+                }
+            ],
+            "description": "Selenium Server integration for PHPUnit",
+            "homepage": "http://www.phpunit.de/",
+            "keywords": [
+                "selenium",
+                "testing",
+                "xunit"
+            ],
+            "time": "2014-11-02 09:23:27"
+        },
+        {
+            "name": "phpunit/phpunit-story",
+            "version": "1.0.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/phpunit/phpunit-story.git",
+                "reference": "b8579ada6ede4fd2f4b49e8549a8a176606cae68"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/phpunit/phpunit-story/zipball/b8579ada6ede4fd2f4b49e8549a8a176606cae68",
+                "reference": "b8579ada6ede4fd2f4b49e8549a8a176606cae68",
+                "shasum": ""
+            },
+            "require": {
+                "ext-spl": "*",
+                "php": ">=5.2.7",
+                "phpunit/phpunit": ">=3.6.0RC1@stable"
+            },
+            "type": "library",
+            "autoload": {
+                "classmap": [
+                    "PHPUnit/"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "include-path": [
+                ""
+            ],
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "authors": [
+                {
+                    "name": "Sebastian Bergmann",
+                    "email": "sb@sebastian-bergmann.de",
+                    "role": "lead"
+                }
+            ],
+            "description": "Story extension for PHPUnit to facilitate Behaviour-Driven Development.",
+            "homepage": "http://www.phpunit.de/",
+            "keywords": [
+                "BDD",
+                "TDD",
+                "xunit"
+            ],
+            "time": "2013-04-02 16:07:28"
         },
         {
             "name": "sebastian/comparator",
