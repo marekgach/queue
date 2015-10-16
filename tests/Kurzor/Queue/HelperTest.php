@@ -186,7 +186,7 @@ class HelperTest extends DbTestCase
 
     /**
      * @expectedException \Kurzor\Queue\Exception
-     * @expectedExceptionMessage [Queue] Couldn't connect to the database. PDO said [SQLSTATE[HY000] [2005] Unknown MySQL server host 'bar' (2)]
+     * @expectedExceptionMessage [Queue] Couldn't connect to the database. PDO said [SQLSTATE[HY000]
      */
     public function test_getConnection_BadCredentials()
     {
