@@ -1,6 +1,7 @@
 <?php
 namespace Kurzor\Queue\Entity;
 
+use Kurzor\DateTime;
 use Kurzor\Queue\Exception\Retry;
 use Kurzor\Queue\Helper;
 
@@ -115,16 +116,18 @@ class Job
         );
 
         $lock = $this->helper->runUpdate(
-            "UPDATE {$this->helper->jobsTable} SET locked_at = NOW(), locked_by = ? " .
+            "UPDATE {$this->helper->jobsTable} SET locked_at = ?, locked_by = ? " .
             "WHERE id = ? AND (locked_at IS NULL OR locked_by = ?) AND failed_at IS NULL",
-            array($this->worker_name, $this->job_id, $this->worker_name)
+            array(DateTime::now()->format(DateTime::DB_FULL), $this->worker_name, $this->job_id, $this->worker_name)
         );
 
+        // @codeCoverageIgnoreStart
         // some error met
         if (!$lock) {
             $this->helper->log("[JOB] failed to acquire lock for job::{$this->job_id}", Helper::INFO);
             return false;
         }
+        // @codeCoverageIgnoreEnd
 
         return true;
     }
@@ -167,10 +170,17 @@ class Job
      */
     public function finishWithError($error, $handler = null)
     {
+        $rs = $this->helper->runQuery(
+            "SELECT * FROM {$this->helper->jobsTable} WHERE id = ?",
+            array($this->job_id)
+        );
+
         $this->helper->runUpdate(
             "UPDATE {$this->helper->jobsTable} SET attempts = attempts + 1, " .
-            "failed_at = IF(attempts >= ?, NOW(), NULL), error = IF(attempts >= ?, ?, NULL) WHERE id = ?",
-            array($this->max_attempts, $this->max_attempts, $error, $this->job_id)
+            "failed_at = ?, error =  ? WHERE id = ?",
+            array($rs[0]['attempts'] +1 >= $this->max_attempts ? DateTime::now()->format(DateTime::DB_FULL) : null,
+                $rs[0]['attempts'] +1 >= $this->max_attempts ? $error : null,
+                $this->job_id)
         );
 
         $this->helper->log($error, Helper::ERROR);
@@ -192,10 +202,13 @@ class Job
      */
     public function retryLater($delay)
     {
+        $date = new DateTime();
+        $date = $date->addPart($delay, DateTime::PART_SECOND);
+
         $this->helper->runUpdate(
             "UPDATE {$this->helper->jobsTable} " .
-            "SET run_at = DATE_ADD(NOW(), INTERVAL ? SECOND) attempts = attempts + 1 WHERE id = ?",
-            array($delay, $this->job_id)
+            "SET run_at = ?, attempts = attempts + 1 WHERE id = ?",
+            array($date->format(DateTime::DB_FULL), $this->job_id)
         );
 
         // release the aquired lock

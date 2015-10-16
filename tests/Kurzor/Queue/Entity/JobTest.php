@@ -1,6 +1,7 @@
 <?php
 namespace Kurzor\Queue;
 
+use Kurzor\DateTime;
 use Kurzor\Queue\Entity\Job;
 use Kurzor\Tests\DbTestCase;
 use PHPUnit_Extensions_Database_DataSet_IDataSet;
@@ -108,6 +109,130 @@ class JobTest extends DbTestCase
     }
 
     /**
+     * Should reschedule job and release the aquired lock.
+     */
+    public function test_retryLater()
+    {
+        $job_id = 5;
+        DateTime::setNow(\Kurzor\DateTime::fromDb('2015-04-25 19:25:25'));
+
+        $job = new Job('default', $job_id, $this->helper);
+        $this->assertNull($job->retryLater(3600));
+
+        // check data in db
+        $stmt = $this->getConnection()->getConnection()
+            ->prepare("SELECT * FROM {$this->helper->jobsTable} WHERE id=?");
+
+        $stmt->execute(array($job_id));
+        $dbData = $stmt->fetch();
+
+        $this->assertEquals($job_id, $dbData['id']);
+        $this->assertEquals('2015-04-25 20:25:25', $dbData['run_at'] );
+        $this->assertEquals('2', $dbData['attempts'] );
+    }
+
+    public function test_finishWithError()
+    {
+        $job_id = 6;
+        DateTime::setNow(\Kurzor\DateTime::fromDb('2015-04-25 19:25:25'));
+
+        $this->expectOutputRegex('/\[.*\] failure in job::6/');
+
+        $job = new Job('default', $job_id, $this->helper);
+        $this->assertNull($job->finishWithError('super error'));
+
+        // check data in db
+        $stmt = $this->getConnection()->getConnection()
+            ->prepare("SELECT * FROM {$this->helper->jobsTable} WHERE id=?");
+
+        $stmt->execute(array($job_id));
+        $dbData = $stmt->fetch();
+
+        $this->assertEquals($job_id, $dbData['id']);
+        $this->assertEquals('2015-04-25 19:25:25', $dbData['failed_at']);
+        $this->assertEquals('super error', $dbData['error']);
+        $this->assertEquals(5, $dbData['attempts']);
+    }
+
+    public function test_finish()
+    {
+        $job_id = 6;
+        DateTime::setNow(\Kurzor\DateTime::fromDb('2015-04-25 19:25:25'));
+        $this->expectOutputRegex('/\[.*\] completed job::6/');
+
+        $job = new Job('default', $job_id, $this->helper);
+        $this->assertNull($job->finish());
+
+        // check data in db
+        $stmt = $this->getConnection()->getConnection()
+            ->prepare("SELECT * FROM {$this->helper->jobsTable} WHERE id=?");
+
+        $stmt->execute(array($job_id));
+        $dbData = $stmt->fetch();
+
+        $this->assertFalse($dbData);
+    }
+
+    public function test_acquireLock()
+    {
+        $job_id = 4;
+        DateTime::setNow(\Kurzor\DateTime::fromDb('2015-04-25 19:25:25'));
+        $this->expectOutputRegex('/\[.*\] attempting to acquire lock for job::4/');
+
+        $job = new Job('default', $job_id, $this->helper);
+        $this->assertTrue($job->acquireLock());
+
+        // check data in db
+        $stmt = $this->getConnection()->getConnection()
+            ->prepare("SELECT * FROM {$this->helper->jobsTable} WHERE id=?");
+
+        $stmt->execute(array($job_id));
+        $dbData = $stmt->fetch();
+
+        $this->assertEquals($job_id, $dbData['id']);
+        $this->assertEquals('2015-04-25 19:25:25', $dbData['locked_at']);
+        $this->assertEquals('default', $dbData['locked_by']);
+    }
+
+    public function test_acquireLock_lockUnlockable()
+    {
+        $job_id = 3;
+        DateTime::setNow(\Kurzor\DateTime::fromDb('2015-04-25 19:25:25'));
+        $this->expectOutputRegex('/\[.*\] attempting to acquire lock for job::3/');
+
+        $job = new Job('default', $job_id, $this->helper);
+        $this->assertFalse($job->acquireLock());
+
+        // check data in db
+        $stmt = $this->getConnection()->getConnection()
+            ->prepare("SELECT * FROM {$this->helper->jobsTable} WHERE id=?");
+
+        $stmt->execute(array($job_id));
+        $dbData = $stmt->fetch();
+
+        $this->assertEquals($job_id, $dbData['id']);
+        $this->assertNull($dbData['locked_at']);
+        $this->assertNull($dbData['locked_by']);
+    }
+
+    public function test_finishWithError_callHandlerErrorMethod()
+    {
+        $this->expectOutputRegex('/\[.*\] failure in job::6/');
+
+        $handler = $this->getMockBuilder('Kurzor\Queue\DummyHandler')
+            ->disableOriginalConstructor()
+            ->setMethods(array('_onJobRetryError'))
+            ->getMock();
+
+        $handler->expects($this->once())
+            ->method('_onJobRetryError');
+
+        $job_id = 6;
+        $job = new Job('default', $job_id, $this->helper);
+        $this->assertNull($job->finishWithError('super error', $handler));
+    }
+
+    /**
      * Returns the test dataset.
      *
      * @return PHPUnit_Extensions_Database_DataSet_IDataSet
@@ -126,6 +251,12 @@ class JobTest extends DbTestCase
                 ),
                 array('id' => 4, 'failed_at' => null, 'locked_at' => null, 'queue' => 'mail', 'handler' => 'foo:bar',
                     'created_at' => '2015-01-01 09:52:44', 'attempts' => 0
+                ),
+                array('id' => 5, 'failed_at' => null, 'locked_at' => '2015-04-25 19:25:25', 'queue' => 'mail',
+                    'handler' => 'foo:bar', 'created_at' => '2015-04-25 19:25:24', 'attempts' => 1
+                ),
+                array('id' => 6, 'failed_at' => null, 'locked_at' => '2015-04-25 19:25:25', 'queue' => 'mail',
+                    'handler' => 'foo:bar', 'created_at' => '2015-04-25 19:25:24', 'attempts' => 4
                 ),
             ),
         ));
@@ -151,5 +282,13 @@ CREATE TABLE `jobs` (
 );';
 
         $this->getConnection()->getConnection()->query($query);
+    }
+}
+
+class DummyHandler
+{
+    public function _onJobRetryError()
+    {
+        return null;
     }
 }
