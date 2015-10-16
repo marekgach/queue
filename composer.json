@@ -10,7 +10,8 @@
         "phpunit/phpunit": "4.7.*",
         "phpunit/dbunit": "1.4.1",
         "phpunit/phpunit-story": "^1.0",
-        "phpunit/phpunit-selenium": "^1.4"
+        "phpunit/phpunit-selenium": "^1.4",
+        "phpunit/php-invoker": "^1.1"
     },
     "license": "GPL",
     "authors": [
