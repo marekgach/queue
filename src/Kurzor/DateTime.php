@@ -3,7 +3,7 @@ namespace Kurzor;
 
 /**
  * Class DateTime
- * Extended class to handle dates. The main benefit is ability to set some fixed testing date using setNow static method.
+ * Extended class to handle dates. The main benefit is ability to set some fixed testing date using setNow static method
  * Then if this DateTime class is used in whole application, it can simulate some other date in system then today. It is
  * good for unittests and other types of testing.
  *
@@ -51,7 +51,7 @@ class DateTime extends \DateTime
      * @param null $time time in format for regular \DateTime object
      * @param \DateTimeZone $object time zone
      */
-    public function  __construct($time = null, \DateTimeZone $object = null)
+    public function __construct($time = null, \DateTimeZone $object = null)
     {
         if (!$time && self::$now) {
             $time = self::now()->format(self::DB_FULL);
@@ -125,7 +125,7 @@ class DateTime extends \DateTime
      */
     public static function now()
     {
-        if (isset (self::$now)) {
+        if (isset(self::$now)) {
             return clone(self::$now);
         }
 
@@ -202,7 +202,7 @@ class DateTime extends \DateTime
     /**
      * Inject some custom date to be our new NOW
      *
-     * @param \Kurzor\DateTime|null $now object to inject date from
+     * @param \DateTime|null $now object to inject date from
      */
     public static function setNow(\DateTime $now = null)
     {
