@@ -1,3 +1,5 @@
+Simple queue in PHP - currently under development.
+
 You need to have table jobs present in your database. Please run the SQL below
 to create it.
 
