@@ -1,5 +1,8 @@
 Simple queue in PHP - currently under development.
 
+[![Build Status](https://travis-ci.org/marekgach/queue.svg?branch=master)](https://travis-ci.org/marekgach/queue)
+[![Coverage Status](https://coveralls.io/repos/marekgach/queue/badge.svg?branch=master&service=github)](https://coveralls.io/github/marekgach/queue?branch=master)
+
 You need to have table jobs present in your database. Please run the SQL below
 to create it.
 
