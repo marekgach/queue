@@ -54,6 +54,55 @@ class WorkerTest extends DbTestCase
         $this->assertEquals(15, \TestHelper::getPrivateField($worker, 'max_attempts'));
     }
 
+    public function test_handleSignal()
+    {
+        $this->expectOutputRegex('/\[.*\] Received SIGTERM... Shutting down/');
+
+        $worker = new Worker(null, $this->helper);
+
+        $worker->handleSignal(SIGTERM);
+
+    }
+
+    /**
+     * After release lock for jobs there will be not locked jobs for the queue and host (name).
+     */
+    public function test_releaseLocks()
+    {
+        $worker = new Worker(null, $this->helper);
+
+        \TestHelper::setPrivateField($worker, 'name', 'host::localhost pid::1');
+
+        $worker->releaseLocks();
+
+        // there will be no jobs locked by worker left
+        $stmt = $this->getConnection()->getConnection()
+            ->prepare("SELECT * FROM {$this->helper->jobsTable} WHERE locked_by='host::localhost pid::1'");
+        $stmt->execute();
+
+        $this->assertFalse($stmt->fetch());
+    }
+
+    /**
+     * After release lock for jobs there will be not locked jobs for the queue and host (name).
+     */
+    public function test_releaseLocks_ReleasesOnlyOwn()
+    {
+        $worker = new Worker(null, $this->helper);
+
+        \TestHelper::setPrivateField($worker, 'name', 'host::foobar pid::777');
+
+        $worker->releaseLocks();
+
+        // there will be no jobs locked by worker left
+        $stmt = $this->getConnection()->getConnection()
+           ->prepare("SELECT COUNT(*) as cnt FROM {$this->helper->jobsTable} WHERE locked_by='host::localhost pid::1'");
+        $stmt->execute();
+        $ret = $stmt->fetch();
+
+        $this->assertEquals(1, $ret['cnt']);
+    }
+
     /**
      * Returns the test dataset.
      *
@@ -63,22 +112,11 @@ class WorkerTest extends DbTestCase
     {
         return $this->createArrayDataSet(array(
             $this->helper->jobsTable => array(
-                array('id' => 1, 'failed_at' => null, 'locked_at' => null, 'queue' => 'default',
-                    'handler' => 'O:8:"stdClass":0:{}', 'created_at' => '2015-04-25 19:02:15', 'attempts' => 2),
+                array('id' => 1, 'failed_at' => null, 'locked_at' => '2015-04-24 11:22:33',
+                    'locked_by' => 'host::localhost pid::1', 'queue' => 'default', 'handler' => 'O:8:"stdClass":0:{}',
+                    'created_at' => '2015-04-25 19:02:15', 'attempts' => 2),
                 array('id' => 2, 'failed_at' => '2015-04-24 10:55:48', 'locked_at' => null, 'queue' => 'default',
                     'handler' => 'foo:bar', 'created_at' => '2015-04-24 10:52:44', 'attempts' => 0
-                ),
-                array('id' => 3, 'failed_at' => '2015-01-01 09:53:55', 'locked_at' => null, 'queue' => 'mail',
-                    'handler' => 'foo:bar', 'created_at' => '2015-01-01 09:52:44', 'attempts' => 0
-                ),
-                array('id' => 4, 'failed_at' => null, 'locked_at' => null, 'queue' => 'mail', 'handler' => 'foo:bar',
-                    'created_at' => '2015-01-01 09:52:44', 'attempts' => 0
-                ),
-                array('id' => 5, 'failed_at' => null, 'locked_at' => '2015-04-25 19:25:25', 'queue' => 'mail',
-                    'handler' => 'foo:bar', 'created_at' => '2015-04-25 19:25:24', 'attempts' => 1
-                ),
-                array('id' => 6, 'failed_at' => null, 'locked_at' => '2015-04-25 19:25:25', 'queue' => 'mail',
-                    'handler' => 'foo:bar', 'created_at' => '2015-04-25 19:25:24', 'attempts' => 4
                 ),
             ),
         ));
