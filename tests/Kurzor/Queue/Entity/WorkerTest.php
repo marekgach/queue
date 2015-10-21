@@ -10,7 +10,7 @@ use PHPUnit_Extensions_Database_DataSet_IDataSet;
 /**
  *
  */
-class JobTest extends DbTestCase
+class WorkerTest extends DbTestCase
 {
     /**
      * @var \Kurzor\Queue\Helper
@@ -22,6 +22,8 @@ class JobTest extends DbTestCase
      */
     protected function setUp()
     {
+        require_once "DummyHandler.php";
+
         $this->helper = $this->getMockBuilder('Kurzor\Queue\Helper')
             ->disableOriginalConstructor()
             ->setMethods(null)
@@ -102,13 +104,5 @@ CREATE TABLE `jobs` (
 );';
 
         $this->getConnection()->getConnection()->query($query);
-    }
-}
-
-class DummyHandler
-{
-    public function _onJobRetryError()
-    {
-        return null;
     }
 }
