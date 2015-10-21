@@ -89,10 +89,12 @@ class Worker
         $this->name = "host::{$this->hostname} pid::{$this->pid}";
 
         // set functions to handle signals - TERM and INT
+        // @codeCoverageIgnoreStart
         if (function_exists("pcntl_signal")) {
             pcntl_signal(SIGTERM, array($this, "handleSignal"));
             pcntl_signal(SIGINT, array($this, "handleSignal"));
         }
+        // @codeCoverageIgnoreEnd
     }
 
 
@@ -114,7 +116,6 @@ class Worker
         $this->helper->log("[Queue WORKER] Received {$signal}... Shutting down", Helper::INFO);
         // release all locks aquired
         $this->releaseLocks();
-        die(0);
     }
 
 
