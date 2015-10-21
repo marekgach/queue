@@ -91,22 +91,24 @@ class Service
         $created_at = date('Y-m-d H:i:s'); // need to use instead of NOW() statement to work also in SQLite
         $run_at = $run_at ? $run_at->format('Y-m-d H:i:s') : null; // if not null format as string, else leave null
 
+        $affected = 0;
+        $sql = "INSERT INTO {$this->helper->jobsTable} (handler, queue, run_at, created_at)" .
+               "VALUES (?, ?, ?, '$created_at')";
 
-        $sql = "INSERT INTO " . $this->helper->jobsTable . " (handler, queue, run_at, created_at) VALUES";
-        $sql .= implode(",", array_fill(0, count($handlers), "(?, ?, ?, '$created_at')"));
-
-        $parameters = array();
         foreach ($handlers as $handler) {
+            $parameters = array();
             $parameters[] = serialize(($handler));
-            $parameters[] = (string) $queue;
+            $parameters[] = (string)$queue;
             $parameters[] = $run_at;
-        }
-        $affected = $this->helper->runUpdate($sql, $parameters);
 
-        // @codeCoverageIgnoreStart
-        if ($affected < 1) {
-            $this->helper->log("[JOB] failed to enqueue new jobs", Helper::ERROR);
-            return false;
+            $affected = $this->helper->runUpdate($sql, $parameters);
+
+            // @codeCoverageIgnoreStart
+            if ($affected < 1) {
+                $this->helper->log("[JOB] failed to enqueue new jobs", Helper::ERROR);
+            } else {
+                $affected++;
+            }
         }
 
         if ($affected != count($handlers)) {
