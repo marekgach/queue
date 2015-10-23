@@ -247,7 +247,7 @@ class DateTime extends \DateTime
                 $interval = "P{$number}Y";
                 break;
             default:
-                throw new \InvalidArgumentException('Chybna date part '. $part);
+                throw new \InvalidArgumentException('Not correct date part '. $part);
         }
 
         return $interval;
