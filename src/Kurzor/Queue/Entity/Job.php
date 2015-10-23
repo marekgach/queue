@@ -96,7 +96,7 @@ class Job
             }
             return false;
 
-        } catch (Exception $e) { // we have some exception other the Retry - mark execution as failed
+        } catch (\Exception $e) { // we have some exception other the Retry - mark execution as failed
             $this->finishWithError($e->getMessage(), $handler);
             return false;
         }

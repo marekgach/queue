@@ -22,6 +22,9 @@ class JobTest extends DbTestCase
     protected function setUp()
     {
         require_once "DummyHandler.php";
+        require_once "SampleHandler.php";
+        require_once "SampleHandlerException.php";
+        require_once "SampleHandlerRetry.php";
 
         $this->helper = $this->getMockBuilder('Kurzor\Queue\Helper')
             ->disableOriginalConstructor()
@@ -234,6 +237,60 @@ class JobTest extends DbTestCase
         $this->assertNull($job->finishWithError('super error', $handler));
     }
 
+    public function test_run_badHandler()
+    {
+        $this->expectOutputRegex('/\[.*\] bad handler for job::7/');
+        $this->expectOutputRegex('/\[.*\] failure in job::7/');
+
+        $job_id = 7;
+        $job = new Job('default', $job_id, $this->helper);
+
+        $job->run();
+    }
+
+    public function test_run_sampleHandler()
+    {
+        $this->expectOutputRegex('/\[.*\] completed job::8/');
+        $this->expectOutputRegex('/foo/');
+
+        $job_id = 8;
+        $job = new Job('default', $job_id, $this->helper);
+
+        $job->run();
+    }
+
+    public function test_run_sampleHandlerException()
+    {
+        $this->expectOutputRegex('/.*super exception!/');
+        $this->expectOutputRegex('/.*\[JOB\] failure in job::9/');
+
+        $job_id = 9;
+        $job = new Job('default', $job_id, $this->helper);
+
+        $job->run();
+    }
+
+    public function test_run_sampleHandlerRetry_maxAttempts()
+    {
+        $this->expectOutputRegex('/.*job::10 caught Exception\Retry "100" on attempt 5/5. Giving up./');
+        $this->expectOutputRegex('/.*\[JOB\] failure in job::10/');
+
+        $job_id = 10;
+        $job = new Job('default', $job_id, $this->helper);
+
+        $job->run();
+    }
+
+    public function test_run_sampleHandlerRetry_reschedule()
+    {
+        $this->expectOutputRegex('/.*job::11 caught .* on attempt .*. Try again in 7200 seconds/');
+
+        $job_id = 11;
+        $job = new Job('default', $job_id, $this->helper);
+
+        $this->assertFalse($job->run());
+    }
+
     /**
      * Returns the test dataset.
      *
@@ -259,6 +316,30 @@ class JobTest extends DbTestCase
                 ),
                 array('id' => 6, 'failed_at' => null, 'locked_at' => '2015-04-25 19:25:25', 'queue' => 'mail',
                     'handler' => 'foo:bar', 'created_at' => '2015-04-25 19:25:24', 'attempts' => 4
+                ),
+                // entity row with bad handler
+                array('id' => 7, 'failed_at' => null, 'locked_at' => '2015-04-25 19:25:25', 'queue' => 'mail',
+                    'handler' => 'a:0:{}', 'created_at' => '2015-04-25 19:25:24', 'attempts' => 4
+                ),
+                // entity row with SampleHandler
+                array('id' => 8, 'failed_at' => null, 'locked_at' => '2015-04-25 19:25:25', 'queue' => 'mail',
+                    'handler' => 'O:26:"Kurzor\Queue\SampleHandler":0:{}', 'created_at' => '2015-04-25 19:25:24',
+                    'attempts' => 4
+                ),
+                // entity row with SampleHandlerException
+                array('id' => 9, 'failed_at' => null, 'locked_at' => '2015-04-25 19:25:25', 'queue' => 'mail',
+                    'handler' => 'O:35:"Kurzor\Queue\SampleHandlerException":0:{}',
+                    'created_at' => '2015-04-25 19:25:24', 'attempts' => 4
+                ),
+                // entity row with SampleHandlerRetry
+                array('id' => 10, 'failed_at' => null, 'locked_at' => '2015-04-25 19:25:25', 'queue' => 'mail',
+                    'handler' => 'O:31:"Kurzor\Queue\SampleHandlerRetry":0:{}',
+                    'created_at' => '2015-04-25 19:25:24', 'attempts' => 4
+                ),
+                // entity row with SampleHandlerRetry
+                array('id' => 11, 'failed_at' => null, 'locked_at' => '2015-04-25 19:25:25', 'queue' => 'mail',
+                    'handler' => 'O:31:"Kurzor\Queue\SampleHandlerRetry":0:{}',
+                    'created_at' => '2015-04-25 19:25:24', 'attempts' => 0
                 ),
             ),
         ));
