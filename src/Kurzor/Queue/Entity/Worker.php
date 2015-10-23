@@ -1,6 +1,7 @@
 <?php
 namespace Kurzor\Queue\Entity;
 
+use Kurzor\DateTime;
 use Kurzor\Queue\Helper;
 
 /**
@@ -141,10 +142,10 @@ class Worker
     {
         // we can grab a locked job if we own the lock
         $rs = $this->helper->runQuery(
-            "SELECT id FROM {$this->helper->jobsTable} WHERE  queue = ? AND (run_at IS NULL OR NOW() >= run_at) " .
+            "SELECT id FROM {$this->helper->jobsTable} WHERE  queue = ? AND (run_at IS NULL OR ? >= run_at) " .
             "AND (locked_at IS NULL OR locked_by = ?) AND failed_at IS NULL AND attempts < ? " .
             "ORDER BY created_at DESC LIMIT  10",
-            array($this->queue, $this->name, $this->max_attempts)
+            array($this->queue, DateTime::now()->format(DateTime::DB_FULL), $this->name, $this->max_attempts)
         );
 
         // randomly order the 10 to prevent lock contention among workers

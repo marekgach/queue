@@ -103,6 +103,32 @@ class WorkerTest extends DbTestCase
         $this->assertEquals(1, $ret['cnt']);
     }
 
+    public function test_getNewJob()
+    {
+        $this->expectOutputRegex('/\[.*\] attempting to acquire lock for job::/');
+
+        DateTime::setNow(\Kurzor\DateTime::fromDb('2015-04-20 00:00:00'));
+        $worker = new Worker(null, $this->helper);
+
+        $job = $worker->getNewJob();
+
+        $this->assertInstanceOf('\Kurzor\Queue\Entity\Job', $job);
+    }
+
+    public function test_getNewJob_emptyQueue()
+    {
+        $stmt = $this->getConnection()->getConnection()
+            ->prepare("DELETE FROM {$this->helper->jobsTable}");
+        $stmt->execute();
+
+        DateTime::setNow(\Kurzor\DateTime::fromDb('2015-04-20 00:00:00'));
+        $worker = new Worker(null, $this->helper);
+
+        $job = $worker->getNewJob();
+
+        $this->assertFalse($job);
+    }
+
     /**
      * Returns the test dataset.
      *
@@ -118,6 +144,14 @@ class WorkerTest extends DbTestCase
                 array('id' => 2, 'failed_at' => '2015-04-24 10:55:48', 'locked_at' => null, 'queue' => 'default',
                     'handler' => 'foo:bar', 'created_at' => '2015-04-24 10:52:44', 'attempts' => 0
                 ),
+                array('id' => 3, 'failed_at' => null, 'locked_at' => null, 'queue' => 'default',
+                    'handler' => 'foo:bar', 'created_at' => '2015-04-24 10:52:44', 'attempts' => 0,
+                    'run_at' => '2015-04-24 10:52:44'
+                ),
+                array('id' => 4, 'failed_at' => null, 'locked_at' => null, 'queue' => 'default',
+                    'handler' => 'foo:bar', 'created_at' => '2015-04-24 10:52:44', 'attempts' => 0,
+                    'run_at' => '2099-04-24 10:52:44'
+                )
             ),
         ));
     }
