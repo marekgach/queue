@@ -176,9 +176,11 @@ class Worker
         try {
             while ($this->count == 0 || $count < $this->count) {
                 // Calls signal handlers for pending signals
+                // @codeCoverageIgnoreStart
                 if (function_exists("pcntl_signal_dispatch")) {
                     pcntl_signal_dispatch();
                 }
+                // @codeCoverageIgnoreEnd
 
                 $count += 1;
                 $job = $this->getNewJob();
@@ -195,7 +197,7 @@ class Worker
            // @todo use helper to store stats / also use in task runner (while running single task using bin/task.php)
            // @todo log into stats - taskname, time, avg time, total run count
             }
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->helper->log("[JOB] unhandled exception::\"{$e->getMessage()}\"", Helper::ERROR);
         }
 

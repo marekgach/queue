@@ -259,6 +259,9 @@ class JobTest extends DbTestCase
         $job->run();
     }
 
+    /**
+     * @expectedException Exception
+     */
     public function test_run_sampleHandlerException()
     {
         $this->expectOutputRegex('/.*super exception!/');

@@ -23,6 +23,8 @@ class WorkerTest extends DbTestCase
     protected function setUp()
     {
         require_once "DummyHandler.php";
+        require_once "SampleHandler.php";
+        require_once "SampleHandlerException.php";
 
         $this->helper = $this->getMockBuilder('Kurzor\Queue\Helper')
             ->disableOriginalConstructor()
@@ -127,6 +129,79 @@ class WorkerTest extends DbTestCase
         $job = $worker->getNewJob();
 
         $this->assertFalse($job);
+    }
+
+    public function test_start()
+    {
+        $this->expectOutputRegex('/\[.*\] \[JOB\] Starting worker host::.* pid::.* on queue::default/');
+        $this->expectOutputRegex('/\[.*\] \[JOB\] attempting to acquire lock for job::1 on host::.* pid::.*/');
+        $this->expectOutputRegex('/\[.*\] \[JOB\] completed job::.*/');
+        $this->expectOutputRegex('/\[.*\] \[JOB\] worker shutting down after running 1 jobs, over 1 polling iterations/');
+
+        $stmt = $this->getConnection()->getConnection()
+            ->prepare("DELETE FROM {$this->helper->jobsTable}");
+        $stmt->execute();
+
+        $dataset = $this->createArrayDataSet(array(
+            $this->helper->jobsTable => array(
+                // entity row with SampleHandler
+                array('id' => 1, 'failed_at' => null, 'locked_at' => null, 'queue' => 'default',
+                    'handler' => 'O:26:"Kurzor\Queue\SampleHandler":0:{}', 'created_at' => '2015-04-25 19:25:24',
+                    'attempts' => 0
+                ),
+            )
+        ));
+
+        $this->getDatabaseTester()->setDataSet($dataset);
+        $this->getDatabaseTester()->onSetUp();
+
+        $worker = new Worker(array('count' => 1), $this->helper);
+
+        $worker->start();
+    }
+
+    public function test_start_emptyQueue()
+    {
+        $this->expectOutputRegex('/\[.*\] \[JOB\] Starting worker host::.* pid::.* on queue::default/');
+        $this->expectOutputRegex('/\[.*\] \[JOB\] worker shutting down after running 0 jobs, over 1 polling iterations/');
+
+        $stmt = $this->getConnection()->getConnection()
+            ->prepare("DELETE FROM {$this->helper->jobsTable}");
+        $stmt->execute();
+
+        $worker = new Worker(array('count' => 1), $this->helper);
+
+        $worker->start();
+    }
+
+    public function test_start_unhandeledException()
+    {
+        $this->expectOutputRegex('/\[.*\] \[JOB\] Starting worker host::.* pid::.* on queue::default/');
+        $this->expectOutputRegex('/\[.*\] \[JOB\] attempting to acquire lock for job::1 on host::.* pid::.*/');
+        $this->expectOutputRegex('/\[.*\] \[JOB\] failure in job::1/');
+        $this->expectOutputRegex('/\[.*\] \[JOB\] worker shutting down after running 1 jobs, over 1 polling iterations/');
+
+        $stmt = $this->getConnection()->getConnection()
+            ->prepare("DELETE FROM {$this->helper->jobsTable}");
+        $stmt->execute();
+
+
+        $dataset = $this->createArrayDataSet(array(
+            $this->helper->jobsTable => array(
+                // entity row with SampleHandler
+                array('id' => 1, 'failed_at' => null, 'locked_at' => null, 'queue' => 'default',
+                    'handler' => 'O:35:"Kurzor\Queue\SampleHandlerException":0:{}',
+                    'created_at' => '2015-04-25 19:25:24', 'attempts' => 0
+                ),
+            )
+        ));
+
+        $this->getDatabaseTester()->setDataSet($dataset);
+        $this->getDatabaseTester()->onSetUp();
+
+        $worker = new Worker(array('count' => 1), $this->helper);
+
+        $worker->start();
     }
 
     /**
