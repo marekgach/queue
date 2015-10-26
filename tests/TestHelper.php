@@ -107,8 +107,8 @@ if (ini_get('short_open_tag') != "") {
 
 // set error reporting and autoload for composer, library etc.
 error_reporting( E_ALL | E_STRICT );
-require __DIR__ . '/../vendor/autoload.php';
-require realpath(dirname(__FILE__)) . '/../bin/autoload.php';
+
+require realpath(dirname(__FILE__)) . '/../vendor/autoload.php';
 
 require realpath(dirname(__FILE__)) . '/DbTestCase.php';
 

@@ -24,5 +24,8 @@
     "autoload": {
         "psr-0": {"Kurzor":"src/"}
     },
-    "bin": ["bin/queue", "bin/queue.php"]
+    "bin": ["bin/queue", "bin/queue.php"],
+    "archive": {
+        "exclude": ["!vendor", "tests", "*phpunit.xml", ".travis.yml", "build.xml", "composer.phar", "*.swp", "*coveralls.yml"]
+    }
 }
