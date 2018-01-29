@@ -13,7 +13,7 @@
         "phpunit/phpunit-selenium": "^1.4",
         "phpunit/php-invoker": "^1.1"
     },
-    "license": "GPL",
+    "license": "GPL-3.0-or-later",
     "authors": [
         {
             "name": "Marek Gach",
